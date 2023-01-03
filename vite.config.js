@@ -11,7 +11,7 @@ import {
 } from 'unplugin-vue-components/resolvers'
 
 module.exports = {
-    base: '/hospital-vue',
+    base: '/health-manage-vue',
     server: {
         port: 3000,
         //是否弹出浏览器

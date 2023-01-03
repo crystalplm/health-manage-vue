@@ -40,7 +40,9 @@ export default {
 		};
 	},
 	methods: {
-		
+		dataFormSubmit() {
+			
+		}
 	}
 };
 </script>

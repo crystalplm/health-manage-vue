@@ -30,7 +30,16 @@ const routes = [{
 		path: '/',
 		name: 'Main',
 		component: Main,
-		children: [{
+		children: [
+			{
+				path: '/',
+				name: 'index',
+				component: Home,
+				meta: {
+					title: '首页',
+				}
+			},
+			{
 				path: '/home',
 				name: 'Home',
 				component: Home,

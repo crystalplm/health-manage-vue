@@ -232,6 +232,158 @@ export default {
         };
     },
     methods: {
+        loadDeptAndSub: function() {
+            let that = this;
+            that.$http('/medical/dept/searchDeptAndSub', 'GET', {}, false, function(resp) {
+                let result = resp.result;
+                let dept = [];
+                for (let one in result) {
+                    let array = [];
+                    for (let sub of result[one]) {
+                        array.push({
+                            value: sub.subId,
+                            label: sub.subName
+                        });
+                    }
+                    dept.push({
+                        value: one,
+                        label: one,
+                        children: array
+                    });
+                }
+                that.dept = dept;
+            });
+        },
+        reset: function() {
+            let dataForm = {
+                id: null,
+                name: null,
+                pid: null,
+                sex: '男',
+                photo: null,
+                birthday: null,
+                school: null,
+                degree: '博士',
+                tel: null,
+                address: null,
+                email: null,
+                job: null,
+                deptSub: null,
+                deptSubId: null,
+                remark: null,
+                description: null,
+                hiredate: null,
+                tag: [],
+                recommended: '普通',
+                status: '在职'
+            };
+            this.dataForm = dataForm;
+            this.newTag = null;
+        },
+        init: function(id) {
+            let that = this;
+            //重置表单控件
+            that.reset();
+            //如果id是undefined，就对模型层id变量赋值为0
+            that.dataForm.id = id || 0;
+            that.visible = true;        
+            //DOM渲染操作要放在$nextTick函数中执行，例如加载数据
+            that.$nextTick(() => {
+                //清理前端验证结果
+                that.$refs['dataForm'].resetFields();
+                //加载二级列表数据
+                that.loadDeptAndSub();
+
+                if (that.dataForm.id) {
+                    that.$http('/doctor/searchById', 'POST', { id: id }, true, function(resp) {
+                        let json = {
+                            '1': '在职',
+                            '2': '离职',
+                            '3': '退休'
+                        };
+                        that.dataForm.name = resp.name;
+                        that.dataForm.pid = resp.pid;
+                        that.dataForm.sex = resp.sex;
+                        that.dataForm.birthday = resp.birthday;
+                        that.dataForm.school = resp.school;
+                        that.dataForm.degree = resp.degree;
+                        that.dataForm.tel = resp.tel;
+                        that.dataForm.address = resp.address;
+                        that.dataForm.email = resp.email;
+                        that.dataForm.job = resp.job;
+                        that.dataForm.remark = resp.remark;
+                        that.dataForm.description = resp.description;
+                        that.dataForm.hiredate = resp.hiredate;
+                        that.dataForm.recommended = resp.recommended ? '推荐' : '不推荐';
+                        that.dataForm.tag = resp.tag;
+                        that.dataForm.status = json[resp.status + ''];
+                        that.dataForm.deptSub = [resp.deptName, resp.deptSubId];
+                    });
+                }
+
+            });
+        },
+        inputTagHandle() {
+            if (this.newTag != null && this.newTag != '') {
+                if (this.dataForm.tag.includes(this.newTag)) {
+                    ElMessage({
+                        message: '不能添加重复标签',
+                        type: 'warning',
+                        duration: 1200
+                    });
+                } else {
+                    this.dataForm.tag.push(this.newTag);
+                    this.newTag = null;
+                }
+            }
+        },
+        closeTagHandle(tag) {
+            let i = this.dataForm.tag.indexOf(tag);
+             this.dataForm.tag.splice(i, 1);
+        },
+        dataFormSubmit() {
+            let that = this;
+            that.$refs['dataForm'].validate(function(valid) {
+                if (valid) {
+                    that.dataForm.deptSubId = that.dataForm.deptSub[1];
+                    let json = {
+                        在职: 1,
+                        离职: 2,
+                        退休: 3
+                    };
+                    let data = {
+                        id: that.dataForm.id,
+                        name: that.dataForm.name,
+                        pid: that.dataForm.pid,
+                        sex: that.dataForm.sex,
+                        birthday: that.dataForm.birthday,
+                        school: that.dataForm.school,
+                        degree: that.dataForm.degree,
+                        tel: that.dataForm.tel,
+                        address: that.dataForm.address,
+                        email: that.dataForm.email,
+                        job: that.dataForm.job,
+                        remark: that.dataForm.remark,
+                        description: that.dataForm.description,
+                        hiredate: dayjs(that.dataForm.hiredate).format('YYYY-MM-DD'),
+                        tag: that.dataForm.tag,
+                        recommended: that.dataForm.recommended == '推荐' ? 1 : 2,
+                        status: json[that.dataForm.status],
+                        subId: that.dataForm.deptSubId
+                    };
+                    that.$http(`/doctor/${!that.dataForm.id ? 'insert' : 'update'}`, 'POST', data, true, function(
+                        resp
+                    ) {
+                        ElMessage({
+                            message: '操作成功',
+                            type: 'success'
+                        });
+                        that.visible = false;
+                        that.$emit('refreshDataList');
+                    });
+                }
+            });
+        }
         
     }
 };

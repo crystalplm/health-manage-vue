@@ -36,7 +36,7 @@
                                     ></el-input>
                                 </div>
                                 <div class="row">
-                                    <el-button type="primary" class="btn" size="large" @click="login">
+                                    <el-button v-loading.fullscreen.lock="fullscreenLoading" type="primary" class="btn" size="large" @click="login" @keyup.enter="login">
                                         登陆系统
                                     </el-button>
                                 </div>
@@ -69,12 +69,55 @@ export default {
             qrCode: '',
             uuid: null,
             qrCodeTimer: null,
-            loginTimer: null
+            loginTimer: null,
+            fullscreenLoading: false
         };
     },
 
     methods: {
-        
+        login() {
+            let that = this;
+            if (!isUsername(that.username)) {
+                ElMessage({
+                    message: '用户名格式不正确',
+                    type: 'error',
+                    duration: 1200
+                });
+            } else if (!isPassword(that.password)) {
+                ElMessage({
+                    message: '密码格式不正确',
+                    type: 'error',
+                    duration: 1200
+                });
+            } else {
+                const loading = ElLoading.service({
+                    lock: true,
+                    text: '登陆中...',
+                    background: 'rgba(0, 0, 0, 0.7)',
+                })
+                let data = { username: that.username, password: that.password };
+                //发送登陆请求
+                that.$http('/mis_user/login', 'POST', data, true, function(resp) {
+                    if (resp.result) {
+                        //在浏览器的storage中存储用户权限列表
+                        let permissions = resp.permissions;
+                        //取出Token令牌，保存到storage中
+                        let token = resp.token;
+                        localStorage.setItem('permissions', permissions);
+                        localStorage.setItem('token', token);
+                        that.$router.push({ path: 'Home' });
+                        loading.close();
+                    } else {
+                        loading.close();
+                        ElMessage({
+                            message: '用户名或密码错误',
+                            type: 'error',
+                            duration: 1200
+                        });
+                    }
+                });
+            }
+        }
     }
 };
 </script>

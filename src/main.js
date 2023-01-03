@@ -38,7 +38,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 //导入ElementUI的消息通知组件，下面封装全局Ajax的时候处理异常的时候需要弹出通知
 import {
-    ElMessage
+    ElMessage, ElMessageBox
 } from 'element-plus'
 
 //挂载ElementUl-Plus插件
@@ -91,11 +91,11 @@ app.config.globalProperties.$echarts = echarts //设置全局变量$echarts
 
 
 //后端项目的URL根路径
-let baseUrl = "http://localhost:8092/hospital-api"
+let baseUrl = "http://localhost:8092/health-manage-api"
 app.config.globalProperties.$baseUrl = baseUrl //设置全局变量$baseUrl
 
 //Minio服务器地址
-let minioUrl = "http://Minio服务器IP:9000/hospital"
+let minioUrl = "http://ip:9000/hospital"
 app.config.globalProperties.$minioUrl = minioUrl
 
 
