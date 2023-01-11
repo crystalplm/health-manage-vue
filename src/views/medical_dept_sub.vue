@@ -94,7 +94,7 @@
                     </el-button>
                     <el-button
                         type="text"
-                        :disabled="!isAuth(['ROOT', 'MEDICAL_DEPT_SUB:DELETE']) || scope.row.emps > 0"
+                        :disabled="!isAuth(['ROOT', 'MEDICAL_DEPT_SUB:DELETE']) || scope.row.doctors > 0"
                         @click="deleteHandle(scope.row.id)"
                     >
                         删除
@@ -141,10 +141,117 @@ export default {
         };
     },
     methods: {
-        
+        loadDataList: function() {
+            let that = this;
+            that.dataListLoading = true;
+            let data = {
+                name: that.dataForm.name == '' ? null : that.dataForm.name,
+                deptId: that.dataForm.deptId == '' ? null : that.dataForm.deptId,
+                order: that.dataForm.order,
+                page: that.pageIndex,
+                length: that.pageSize
+            };
+
+            that.$http('/medical/dept/sub/searchByPage', 'POST', data, true, function(resp) {
+                let result = resp.result;
+                that.dataList = result.list;
+                that.totalCount = result.totalCount;
+                that.dataListLoading = false;
+            });
+        },
+        sizeChangeHandle: function(val) {
+            this.pageSize = val;
+            this.pageIndex = 1;
+            this.loadDataList();
+        },
+        currentChangeHandle: function(val) {
+            this.pageIndex = val;
+            this.loadDataList();
+        },
+        searchHandle: function() {
+            this.$refs['dataForm'].validate(valid => {
+                if (valid) {
+                    this.$refs['dataForm'].clearValidate();
+                    if (this.dataForm.name == '') {
+                        this.dataForm.name = null;
+                    }
+                    if (this.dataForm.deptId == '') {
+                        this.dataForm.deptId = null;
+                    }
+                    if (this.pageIndex != 1) {
+                        this.pageIndex = 1;
+                    }
+                    this.loadDataList();
+                } else {
+                    return false;
+                }
+            });
+        },
+        loadDeptList: function() {
+            let that = this;
+            that.$http('/medical/dept/searchAll', 'GET', {}, true, function(resp) {
+                let result = resp.result;
+                that.deptList = result;
+            });
+        },
+        addHandle: function() {
+            this.$nextTick(() => {
+                this.$refs.addOrUpdate.init();
+            });
+        },
+        updateHandle: function(id) {
+            this.$nextTick(() => {
+                this.$refs.addOrUpdate.init(id);
+            });
+        },
+        selectionChangeHandle: function(val) {
+            this.dataListSelections = val;
+        },
+        selectable: function(row, index) {
+            console.log(row)
+            if (row.doctors > 0) {
+                return false;
+            }
+            return true;
+        },
+        deleteHandle: function(id) {
+            let that = this;
+            let ids = id ? [id]
+                : that.dataListSelections.map(item => {
+                    return item.id;
+                });
+            if (ids.length == 0) {
+                ElMessage({
+                    message: '没有选中记录',
+                    type: 'warning',
+                    duration: 1200
+                });
+            } else {
+                ElMessageBox.confirm('确定要删除选中的记录？', '提示信息', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    that.$http('/medical/dept/sub/deleteByIds', 'POST', { ids: ids }, true, function(resp) {
+                        ElMessage({
+                            message: '操作成功',
+                            type: 'success',
+                            duration: 1200,
+                            onClose: () => {
+                                that.loadDataList();
+                            }
+                        });
+                    });
+                });
+            }
+        },
+
+
+
     },
     created: function() {
-        
+        this.loadDeptList();
+        this.loadDataList();
     }
 };
 </script>
